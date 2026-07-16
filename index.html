@@ -184,9 +184,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d1630;
 .qBar i{display:block;height:100%;background:linear-gradient(90deg,#9be15d,#00e3ae);border-radius:99px;}
 
 /* ---------- 콤보 / 파티클 / 다이아 비행 ---------- */
-#comboBadge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#FF6B4A;color:#fff;
-  border-radius:99px;padding:6px 18px;font-size:16px;box-shadow:0 4px 12px rgba(255,107,74,.5);
-  display:none;animation:comboPop .35s cubic-bezier(.2,1.8,.4,1);white-space:nowrap;z-index:2;}
+#comboBadge{position:fixed;top:calc(14px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
+  background:#FF6B4A;color:#fff;border-radius:99px;padding:7px 20px;font-size:16px;
+  box-shadow:0 4px 14px rgba(255,107,74,.55);display:none;
+  animation:comboPop .35s cubic-bezier(.2,1.8,.4,1);white-space:nowrap;z-index:31;}
 @keyframes comboPop{from{transform:translateX(-50%) scale(.4);}to{transform:translateX(-50%) scale(1);}}
 .spark{position:fixed;z-index:48;pointer-events:none;font-size:18px;animation:sparkFly .7s ease-out forwards;}
 @keyframes sparkFly{0%{transform:translate(0,0) scale(1);opacity:1;}100%{transform:translate(var(--dx),var(--dy)) scale(.3);opacity:0;}}
@@ -563,7 +564,7 @@ const WORLDS=[
 /* ============================================================
    버전 / 멀티 프로필 저장
 ============================================================ */
-const VERSION='3.1.0';
+const VERSION='3.1.1';
 const SAVE_VER=3;
 const SAVE_KEY='starlight3d_mp';
 const MAX_PROFILES=4;
@@ -1817,6 +1818,7 @@ function openQuiz(world){
     b.onclick=()=>{ sfx.click(); S.lastLevel[world.id]=i; save(); startRun(world, lv); };
     box.appendChild(b);
   });
+  document.getElementById('comboBadge').style.display='none';
   document.getElementById('levelBox').style.display='block';
   document.getElementById('quizBody').style.display='none';
   document.getElementById('resultBox').style.display='none';
@@ -2047,6 +2049,7 @@ function pick(i,btn){
   }
 }
 function finishQuiz(){
+  document.getElementById('comboBadge').style.display='none';
   document.getElementById('quizBody').style.display='none';
   const res=document.getElementById('resultBox'); res.style.display='block';
   const win = Q.correct >= Math.ceil(Q.total*0.8);
@@ -2079,7 +2082,7 @@ document.getElementById('resAgain').onclick=()=>{ sfx.click(); if(Q.review) star
 document.getElementById('levelClose').onclick=closeQuiz;
 document.getElementById('resOut').onclick=closeQuiz;
 document.getElementById('quizClose').onclick=closeQuiz;
-function closeQuiz(){ sfx.click(); overlay.style.display='none'; quizOpen=false; }
+function closeQuiz(){ sfx.click(); overlay.style.display='none'; quizOpen=false; document.getElementById('comboBadge').style.display='none'; }
 /* 장면 전환 효과 */
 let transLock=false;
 function playTransition(color, cb){
