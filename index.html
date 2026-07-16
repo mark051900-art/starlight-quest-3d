@@ -206,7 +206,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d1630;
   <input id="nameInput" maxlength="8" placeholder="이름 (최대 8글자)">
   <div id="charRow"></div>
   <button id="startBtn">모험 시작</button>
-  <div id="verTag" style="margin-top:14px;color:#5f74a8;font-size:13px;font-weight:normal;"></div>
+  <div id="verTag" style="margin-top:8px;color:#5f74a8;font-size:13px;font-weight:normal;padding:12px 20px;"></div>
 </div>
 
 <div id="setOverlay" style="position:fixed;inset:0;z-index:32;background:rgba(13,22,48,.55);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:16px;">
@@ -225,6 +225,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d1630;
       <button id="profClose" style="background:none;border:none;font-size:22px;color:var(--sub);font-family:inherit;">&#10005;</button>
     </div>
     <div id="profList"></div>
+  </div>
+</div>
+
+<div id="dlgOverlay" style="position:fixed;inset:0;z-index:50;background:rgba(13,22,48,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--card);border-radius:24px;width:min(360px,92vw);padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.4);animation:pop .25s;text-align:center;">
+    <div id="dlgMsg" style="font-size:18px;line-height:1.5;margin-bottom:14px;"></div>
+    <input id="dlgInput" type="number" inputmode="numeric" style="display:none;width:120px;padding:11px;border-radius:14px;border:2px solid #E2E8F4;font-family:inherit;font-size:20px;text-align:center;margin-bottom:14px;">
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="rBtn" id="dlgOk" style="padding:12px 30px;">확인</button>
+      <button class="rBtn ghost" id="dlgCancel" style="padding:12px 26px;">취소</button>
+    </div>
   </div>
 </div>
 
@@ -427,7 +438,7 @@ const WORLDS=[
 /* ============================================================
    버전 / 멀티 프로필 저장
 ============================================================ */
-const VERSION='2.4.0';
+const VERSION='2.4.1';
 const SAVE_VER=3;
 const SAVE_KEY='starlight3d_mp';
 const MAX_PROFILES=4;
@@ -1910,6 +1921,29 @@ function applyProfile(i){
   toast(S.name+'(으)로 전환했어요!');
 }
 /* ============================================================
+   자체 대화상자 (전체화면에서 브라우저 prompt/confirm이 차단되므로)
+============================================================ */
+const dlgEl=document.getElementById('dlgOverlay');
+let dlgCb=null;
+function askDialog(msg, opts, cb){
+  document.getElementById('dlgMsg').innerHTML=msg;
+  const inp=document.getElementById('dlgInput');
+  inp.style.display = opts.input ? 'block' : 'none';
+  inp.value='';
+  dlgCb=cb;
+  dlgEl.style.display='flex';
+  if(opts.input) setTimeout(()=>inp.focus(),80);
+}
+document.getElementById('dlgOk').onclick=()=>{
+  const v=document.getElementById('dlgInput').value;
+  dlgEl.style.display='none';
+  if(dlgCb){ const cb=dlgCb; dlgCb=null; cb(v); }
+};
+document.getElementById('dlgCancel').onclick=()=>{ dlgEl.style.display='none'; dlgCb=null; };
+document.getElementById('dlgInput').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('dlgOk').click(); });
+function askConfirm(msg, cb){ askDialog(msg, {input:false}, ()=>cb()); }
+
+/* ============================================================
    보호자 관리 모드 (숨김: 버전 문구 5회 연속 탭 + 산수 확인)
 ============================================================ */
 const admOverlayEl=document.getElementById('admOverlay');
@@ -1917,15 +1951,15 @@ let admTap=0, admTapTimer=null;
 function admTapCount(){
   admTap++;
   clearTimeout(admTapTimer);
-  admTapTimer=setTimeout(()=>{ admTap=0; },2500);
+  admTapTimer=setTimeout(()=>{ admTap=0; },4000);
   if(admTap>=5){ admTap=0; parentGate(openAdmin); }
 }
 function parentGate(cb){
   const a=Math.floor(Math.random()*8)+12, b=Math.floor(Math.random()*6)+4;
-  const ans=prompt('보호자 확인 문제\n'+a+' × '+b+' = ?');
-  if(ans===null) return;
-  if(parseInt(ans,10)===a*b) cb();
-  else toast('보호자 확인에 실패했어요');
+  askDialog('&#128737;&#65039; 보호자 확인<br><b style="font-size:24px;">'+a+' × '+b+' = ?</b>', {input:true}, v=>{
+    if(parseInt(v,10)===a*b) cb();
+    else toast('보호자 확인에 실패했어요');
+  });
 }
 document.getElementById('verTag').onclick=admTapCount;
 function openAdmin(){
@@ -2074,10 +2108,10 @@ function renderSettings(){
   document.getElementById('btnExport').onclick=exportSave;
   document.getElementById('btnImport').onclick=()=>{ sfx.click(); document.getElementById('importFile').click(); };
   document.getElementById('btnReset').onclick=()=>{
-    if(confirm('"'+(S.name||'현재 프로필')+'"의 진행 데이터를 지울까요? (다른 프로필은 유지돼요)') && confirm('되돌릴 수 없어요. 계속할까요?')){
+    askConfirm('"'+(S.name||'현재 프로필')+'"의 진행 데이터를 전부 지울까요?<br><span style="font-size:14px;color:#a83030;">되돌릴 수 없어요. 다른 프로필은 유지돼요.</span>', ()=>{
       ROOT.profiles[ROOT.active]=defaultProfile();
       save(); location.reload();
-    }
+    });
   };
 }
 function exportSave(){
@@ -2103,18 +2137,18 @@ document.getElementById('importFile').addEventListener('change',function(){
       const data=JSON.parse(rd.result);
       if(Array.isArray(data.profiles)){
         /* 전체 세이브 파일 */
-        if(confirm('모든 프로필('+data.profiles.length+'개)을 이 세이브 파일로 덮어쓸까요?')){
+        askConfirm('모든 프로필('+data.profiles.length+'개)을 이 세이브 파일로 덮어쓸까요?', ()=>{
           localStorage.setItem(SAVE_KEY, JSON.stringify(data));
           location.reload();
-        }
+        });
       } else if(typeof data.diamonds==='number' && typeof data.stars==='object'){
         /* 구버전 단일 프로필 파일 -> 새 프로필로 추가 */
         if(ROOT.profiles.length>=MAX_PROFILES){ toast('프로필이 가득 찼어요 (최대 '+MAX_PROFILES+'개)'); return; }
-        if(confirm('이 세이브를 새 프로필로 추가할까요?')){
+        askConfirm('이 세이브를 새 프로필로 추가할까요?', ()=>{
           ROOT.profiles.push(normalizeProfile(data));
           ROOT.active=ROOT.profiles.length-1;
           save(); location.reload();
-        }
+        });
       } else throw new Error('bad');
     }catch(e){ toast('세이브 파일이 아니에요'); }
   };
@@ -2329,12 +2363,12 @@ function renderProfiles(){
       const px=document.createElement('button'); px.className='px'; px.innerHTML='&#10005;';
       px.onclick=(e)=>{
         e.stopPropagation();
-        if(confirm('"'+(p.name||'프로필 '+(i+1))+'" 프로필을 삭제할까요?') && confirm('이 프로필의 모든 진행이 사라져요. 정말 삭제할까요?')){
+        askConfirm('"'+(p.name||'프로필 '+(i+1))+'" 프로필을 삭제할까요?<br><span style="font-size:14px;color:#a83030;">모든 진행이 사라지고 되돌릴 수 없어요.</span>', ()=>{
           ROOT.profiles.splice(i,1);
           if(ROOT.active>=ROOT.profiles.length) ROOT.active=0;
           S=ROOT.profiles[ROOT.active]; save();
           syncTitleInputs(); renderProfiles();
-        }
+        });
       };
       card.appendChild(px);
     }
