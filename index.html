@@ -65,10 +65,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d1630;
 }
 
 /* ---------- 시작 화면 ---------- */
-#startScreen{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;
+#startScreen,#loginScreen{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:radial-gradient(ellipse at 50% 30%, #33477e 0%, #131c3a 65%, #0b1226 100%);color:#fff;text-align:center;
   padding:calc(20px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));overflow-y:auto;}
-#startScreen > *{flex-shrink:0;}
+#startScreen > *,#loginScreen > *{flex-shrink:0;}
+#loginScreen{z-index:42;}
+.tIn{background:rgba(255,255,255,.1);border:3px solid rgba(255,255,255,.3);border-radius:18px;
+  padding:12px 18px;font-family:inherit;font-size:19px;color:#fff;text-align:center;width:min(280px,80vw);outline:none;}
+.tIn:focus{border-color:var(--gold);}
+.tIn::placeholder{color:#8fa3cf;font-size:16px;}
 #fsStartBtn{position:fixed;top:calc(14px + env(safe-area-inset-top));right:16px;z-index:41;
   background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.35);color:#fff;border-radius:14px;
   width:46px;height:46px;font-size:20px;font-family:inherit;}
@@ -211,13 +216,29 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d1630;
 
 <canvas id="c3d"></canvas>
 
-<div id="startScreen">
+<div id="loginScreen">
+  <div class="starsBg" id="starsBg2"></div>
+  <h1 style="font-size:min(9vw,44px);">별빛 학습 퀘스트 <b>3D</b></h1>
+  <p style="margin:12px 0 18px;">아이디와 비밀번호로 로그인하세요</p>
+  <input class="tIn" id="loginId" maxlength="12" placeholder="아이디" autocomplete="off" autocapitalize="off">
+  <input class="tIn" id="loginPw" type="password" inputmode="numeric" maxlength="4" placeholder="비밀번호 (숫자 4자리)" style="margin-top:10px;">
+  <div id="loginMsg" style="color:#ff9a9a;font-size:14px;font-weight:normal;min-height:22px;margin-top:8px;"></div>
+  <button id="loginBtn" style="background:var(--gold);color:#5c4400;border:none;border-radius:26px;padding:15px 56px;font-family:inherit;font-size:21px;box-shadow:0 7px 0 #d9a930;margin-top:4px;">로그인</button>
+  <button id="regToggle" style="background:none;border:none;color:#8fa3cf;font-family:inherit;font-size:15px;margin-top:16px;text-decoration:underline;">새 계정 만들기</button>
+  <div id="regBox" style="display:none;flex-direction:column;align-items:center;margin-top:14px;gap:10px;">
+    <input class="tIn" id="regId" maxlength="12" placeholder="새 아이디 (영문/숫자 3~12자)" autocomplete="off" autocapitalize="off">
+    <input class="tIn" id="regPw" type="password" inputmode="numeric" maxlength="4" placeholder="비밀번호 (숫자 4자리)">
+    <input class="tIn" id="regPw2" type="password" inputmode="numeric" maxlength="4" placeholder="비밀번호 다시 입력">
+    <button id="regBtn" style="background:#5A8DEE;color:#fff;border:none;border-radius:22px;padding:13px 44px;font-family:inherit;font-size:18px;box-shadow:0 5px 0 #3f6bc2;">계정 만들기</button>
+  </div>
+  <div id="verTag2" style="margin-top:14px;color:#5f74a8;font-size:13px;font-weight:normal;padding:12px 20px;"></div>
+</div>
+
+<div id="startScreen" style="display:none;">
   <button id="fsStartBtn">&#x26F6;</button>
   <div class="starsBg" id="starsBg"></div>
   <h1 style="font-size:min(8vw,42px);">별빛 학습 퀘스트 <b>3D</b></h1>
-  <p style="margin:10px 0 4px;">프로필을 고르세요</p>
-  <div id="profRow"></div>
-  <p style="margin:8px 0 6px;">이름을 정하고 캐릭터를 골라 주세요</p>
+  <p style="margin:8px 0 6px;" id="startHello">이름을 정하고 캐릭터를 골라 주세요</p>
   <input id="nameInput" maxlength="8" placeholder="이름 (최대 8글자)">
   <div id="charRow"></div>
   <button id="startBtn">모험 시작</button>
@@ -233,16 +254,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d1630;
     <div id="setBody"></div>
   </div>
 </div>
-<div id="profOverlay" style="position:fixed;inset:0;z-index:33;background:rgba(13,22,48,.55);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:16px;">
-  <div style="background:var(--card);border-radius:26px;width:min(420px,94vw);max-height:88vh;overflow-y:auto;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.4);animation:pop .3s;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="font-size:21px;">&#128100; 프로필 전환</div>
-      <button id="profClose" style="background:none;border:none;font-size:22px;color:var(--sub);font-family:inherit;">&#10005;</button>
-    </div>
-    <div id="profList"></div>
-  </div>
-</div>
-
 <div id="dlgOverlay" style="position:fixed;inset:0;z-index:50;background:rgba(13,22,48,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:16px;">
   <div style="background:var(--card);border-radius:24px;width:min(360px,92vw);padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.4);animation:pop .25s;text-align:center;">
     <div id="dlgMsg" style="font-size:18px;line-height:1.5;margin-bottom:14px;"></div>
@@ -462,13 +473,14 @@ const WORLDS=[
 /* ============================================================
    버전 / 멀티 프로필 저장
 ============================================================ */
-const VERSION='2.6.0';
+const VERSION='3.0.0';
 const SAVE_VER=3;
 const SAVE_KEY='starlight3d_mp';
 const MAX_PROFILES=4;
 function defaultProfile(){
   return { ver:SAVE_VER, diamonds:0, xp:0, level:1, stars:{}, pets:[], cosmetics:[],
-           equipped:{}, lastLevel:{}, stats:{}, wrongs:[], name:'', charIdx:0 };
+           equipped:{}, lastLevel:{}, stats:{}, wrongs:[], name:'', charIdx:0,
+           loginId:'', pass:'' };
 }
 function normalizeProfile(p){
   const d=defaultProfile();
@@ -1916,66 +1928,6 @@ function openSettings(){
 function closeSettings(){ setOverlayEl.style.display='none'; setOpen=false; }
 
 /* ============================================================
-   게임 중 프로필 빠른 전환 (HUD 이름 칩)
-============================================================ */
-const profOverlayEl=document.getElementById('profOverlay');
-function openProfSwitch(){
-  sfx.click(); setOpen=true; joyEnd();
-  renderProfSwitch();
-  profOverlayEl.style.display='flex';
-}
-function closeProfSwitch(){ profOverlayEl.style.display='none'; setOpen=false; }
-document.getElementById('profClose').onclick=()=>{ sfx.click(); closeProfSwitch(); };
-document.getElementById('hProfChip').onclick=()=>{ if(started && !quizOpen && !shopOpen) openProfSwitch(); };
-function renderProfSwitch(){
-  const list=document.getElementById('profList');
-  list.innerHTML='';
-  ROOT.profiles.forEach((p,i)=>{
-    const cur = i===ROOT.active;
-    const st=Object.values(p.stars||{}).reduce((a,b)=>a+b,0);
-    const row=document.createElement('div'); row.className='shopRow';
-    if(cur) row.style.cssText+='background:#FFF7E0;border:2px solid var(--gold);';
-    row.style.cursor='pointer';
-    row.innerHTML=`<img src="${PREVIEWS[p.charIdx||0]||''}" style="width:40px;height:48px;flex-shrink:0;">
-      <div class="info"><div class="nm">${p.name||'프로필 '+(i+1)}${cur?' <span style="font-size:12px;color:#b8860b;">지금 플레이 중</span>':''}</div>
-      <div class="ds">Lv.${p.level||1} &#183; &#11088; ${st} &#183; &#128142; ${p.diamonds||0}</div></div>`;
-    row.onclick=()=>applyProfile(i);
-    list.appendChild(row);
-  });
-  if(ROOT.profiles.length<MAX_PROFILES){
-    const add=document.createElement('button'); add.className='sBtn';
-    add.style.cssText='width:100%;margin-top:2px;';
-    add.innerHTML='+ 새 프로필 만들기';
-    add.onclick=()=>{
-      sfx.click();
-      ROOT.profiles.push(defaultProfile());
-      switchProfile(ROOT.profiles.length-1);
-      closeProfSwitch(); backToTitle();
-      toast('새 프로필의 이름과 캐릭터를 정해 주세요');
-    };
-    list.appendChild(add);
-  }
-  const manage=document.createElement('button'); manage.className='sBtn';
-  manage.style.cssText='width:100%;margin-top:8px;background:#EDF1F8;color:var(--sub);box-shadow:0 3px 0 #cfd7e6;';
-  manage.innerHTML='프로필 관리 (시작 화면으로)';
-  manage.onclick=()=>{ sfx.click(); closeProfSwitch(); backToTitle(); };
-  list.appendChild(manage);
-}
-function applyProfile(i){
-  sfx.click();
-  if(i===ROOT.active){ closeProfSwitch(); return; }
-  switchProfile(i);
-  closeProfSwitch();
-  if(!S.name){ backToTitle(); toast('이 프로필의 이름과 캐릭터를 정해 주세요'); return; }
-  /* 게임 중 즉시 적용 */
-  setPlayerChar(S.charIdx||0, S.name);
-  setCompanion();
-  WORLDS.forEach((w,k)=>refreshBeacon(k));
-  document.getElementById('hName').innerText=S.name;
-  updateHud();
-  toast(S.name+'(으)로 전환했어요!');
-}
-/* ============================================================
    자체 대화상자 (전체화면에서 브라우저 prompt/confirm이 차단되므로)
 ============================================================ */
 const dlgEl=document.getElementById('dlgOverlay');
@@ -2025,7 +1977,6 @@ function openAdmin(){
 function closeAdmin(){ admOverlayEl.style.display='none'; setOpen=false; }
 document.getElementById('admClose').onclick=()=>{ sfx.click(); closeAdmin(); };
 function admApplyView(ti){
-  /* 활성 프로필이 대상이면 게임 화면에 즉시 반영 */
   if(ti===ROOT.active){
     updateHud();
     WORLDS.forEach((w,k)=>refreshBeacon(k));
@@ -2038,7 +1989,7 @@ function renderAdmin(ti){
   const p=ROOT.profiles[ti];
   let opts='';
   ROOT.profiles.forEach((pr,i)=>{
-    opts+=`<option value="${i}" ${i===ti?'selected':''}>${pr.name||'프로필 '+(i+1)} (Lv.${pr.level||1})</option>`;
+    opts+=`<option value="${i}" ${i===ti?'selected':''}>${pr.name||pr.loginId||'프로필 '+(i+1)} (${pr.loginId||'-'})</option>`;
   });
   let starRows='';
   WORLDS.forEach(w=>{
@@ -2053,7 +2004,7 @@ function renderAdmin(ti){
   });
   b.innerHTML=`
     <div style="margin-bottom:10px;">
-      <div style="font-size:15px;color:var(--sub);margin-bottom:6px;">대상 프로필</div>
+      <div style="font-size:15px;color:var(--sub);margin-bottom:6px;">대상 계정</div>
       <select id="admTarget" style="width:100%;padding:11px;border-radius:14px;border:2px solid #E2E8F4;font-family:inherit;font-size:16px;background:#F5F8FC;">${opts}</select>
     </div>
     <div class="shopRow">
@@ -2073,7 +2024,11 @@ function renderAdmin(ti){
     </div>
     <div style="font-size:15px;color:var(--sub);margin:12px 0 6px;">월드별 별 (0~3)</div>
     ${starRows}
-    <button class="sBtn" id="admHatch" style="width:100%;margin-top:8px;">&#129370; 이 프로필의 알 전부 부화</button>
+    <button class="sBtn" id="admHatch" style="width:100%;margin-top:8px;">&#129370; 이 계정의 알 전부 부화</button>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="sBtn" id="admPwReset" style="flex:1;">&#128273; 비밀번호 0000 초기화</button>
+      <button class="sBtn" id="admDelAcc" style="flex:1;background:#FDECEC;color:#a83030;box-shadow:0 3px 0 #e8c8c8;">계정 삭제</button>
+    </div>
     <div style="text-align:center;color:var(--sub);font-size:12px;font-weight:normal;margin-top:12px;">
       변경 사항은 즉시 저장됩니다</div>`;
   document.getElementById('admTarget').onchange=e=>renderAdmin(parseInt(e.target.value,10));
@@ -2106,7 +2061,149 @@ function renderAdmin(ti){
     admApplyView(ti); renderAdmin(ti);
     toast(n? n+'개의 알이 부화했어요':'부화할 알이 없어요');
   };
+  document.getElementById('admPwReset').onclick=async ()=>{
+    p.pass=await hashPin(p.loginId||'p'+ti, '0000');
+    save(); sfx.correct();
+    toast((p.loginId||'계정')+' 비밀번호를 0000으로 초기화했어요');
+  };
+  document.getElementById('admDelAcc').onclick=()=>{
+    if(ROOT.profiles.length<=1){ toast('마지막 계정은 삭제할 수 없어요'); return; }
+    askConfirm('<b>'+(p.name||p.loginId)+'</b> 계정을 삭제할까요?<br><span style="font-size:14px;color:#a83030;">모든 진행이 사라지고 되돌릴 수 없어요.</span>', ()=>{
+      const wasSession = ROOT.session===p.loginId;
+      ROOT.profiles.splice(ti,1);
+      if(ROOT.active>=ROOT.profiles.length) ROOT.active=0;
+      if(wasSession) ROOT.session=null;
+      S=ROOT.profiles[ROOT.active];
+      save(); location.reload();
+    });
+  };
 }
+
+/* ============================================================
+   HUD 이름 칩 = 계정 (로그아웃)
+============================================================ */
+document.getElementById('hProfChip').onclick=()=>{
+  if(!started || quizOpen || shopOpen) return;
+  sfx.click();
+  askConfirm('<b>'+(S.name||S.loginId)+'</b> 계정에서 로그아웃할까요?<br><span style="font-size:14px;color:var(--sub);">진행은 자동 저장돼요</span>', logout);
+};
+
+/* ============================================================
+   로그인 시스템 (기기 내 계정, 비밀번호는 SHA-256 해시 저장)
+============================================================ */
+async function hashPin(id, pin){
+  const msg=id.toLowerCase()+':'+pin+':starlight';
+  try{
+    if(crypto && crypto.subtle){
+      const b=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+      return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+    }
+  }catch(e){}
+  /* 보안 컨텍스트가 아닐 때의 폴백 해시 */
+  let h1=5381,h2=52711;
+  for(let i=0;i<msg.length;i++){ const c=msg.charCodeAt(i); h1=((h1*33)^c)>>>0; h2=((h2*31)^c)>>>0; }
+  return 'x'+h1.toString(16)+h2.toString(16);
+}
+/* 최초 1회: 지정 계정(서호/seahorse, 서아/seoa)으로 재편, 그 외 프로필 제거 */
+async function ensureAuth(){
+  if(ROOT.profiles.length && ROOT.profiles.every(p=>p.loginId)) return;
+  const sh=ROOT.profiles.find(p=>p.name==='서호' && !p.loginId);
+  const sa=ROOT.profiles.find(p=>p.name==='서아' && !p.loginId);
+  const withLogin=ROOT.profiles.filter(p=>p.loginId); /* 이미 계정화된 프로필은 유지 */
+  async function mk(base, login, nm){
+    const p=base||defaultProfile();
+    p.loginId=login;
+    if(!p.name) p.name=nm;
+    p.pass=await hashPin(login,'0000');
+    return normalizeProfile(p);
+  }
+  const list=[...withLogin];
+  if(!list.some(p=>p.loginId==='seahorse')) list.push(await mk(sh,'seahorse','서호'));
+  if(!list.some(p=>p.loginId==='seoa')) list.push(await mk(sa,'seoa','서아'));
+  ROOT.profiles=list;
+  ROOT.active=0; S=ROOT.profiles[0];
+  ROOT.session=ROOT.session||null;
+  save();
+}
+function showLogin(){
+  document.getElementById('startScreen').style.display='none';
+  document.getElementById('hudTop').style.display='none';
+  talkBtn.style.display='none';
+  joyBase.style.display='none'; joyKnob.style.display='none';
+  started=false;
+  document.getElementById('loginPw').value='';
+  document.getElementById('loginMsg').innerText='';
+  document.getElementById('verTag2').innerText='v'+VERSION+' · 계정 '+ROOT.profiles.length+'개';
+  document.getElementById('loginScreen').style.display='flex';
+}
+function enterTitle(){
+  document.getElementById('loginScreen').style.display='none';
+  syncTitleInputs();
+  document.getElementById('startHello').innerText=(S.loginId||'')+' 계정 · 이름과 캐릭터를 정해 주세요';
+  document.getElementById('startScreen').style.display='flex';
+}
+function logout(){
+  save();
+  ROOT.session=null; save();
+  showLogin();
+}
+async function doLogin(){
+  initAudio(); sfx.click();
+  const id=(document.getElementById('loginId').value||'').trim().toLowerCase();
+  const pw=document.getElementById('loginPw').value||'';
+  const msg=document.getElementById('loginMsg');
+  if(!id || pw.length<4){ msg.innerText='아이디와 비밀번호 4자리를 입력해 주세요'; return; }
+  const idx=ROOT.profiles.findIndex(p=>(p.loginId||'').toLowerCase()===id);
+  if(idx<0){ msg.innerText='없는 아이디예요'; return; }
+  const h=await hashPin(id, pw);
+  if(h!==ROOT.profiles[idx].pass){ msg.innerText='비밀번호가 달라요'; sfx.wrong(); return; }
+  ROOT.active=idx; S=normalizeProfile(ROOT.profiles[idx]);
+  ROOT.session=S.loginId; save();
+  sfx.correct();
+  enterTitle();
+}
+async function doRegister(){
+  initAudio(); sfx.click();
+  const msg=document.getElementById('loginMsg');
+  const id=(document.getElementById('regId').value||'').trim().toLowerCase();
+  const p1=document.getElementById('regPw').value||'';
+  const p2=document.getElementById('regPw2').value||'';
+  if(!/^[a-z0-9]{3,12}$/.test(id)){ msg.innerText='아이디는 영문/숫자 3~12자예요'; return; }
+  if(!/^[0-9]{4}$/.test(p1)){ msg.innerText='비밀번호는 숫자 4자리예요'; return; }
+  if(p1!==p2){ msg.innerText='비밀번호가 서로 달라요'; return; }
+  if(ROOT.profiles.some(p=>(p.loginId||'').toLowerCase()===id)){ msg.innerText='이미 있는 아이디예요'; return; }
+  if(ROOT.profiles.length>=MAX_PROFILES){ msg.innerText='계정은 최대 '+MAX_PROFILES+'개까지예요'; return; }
+  const np=defaultProfile();
+  np.loginId=id;
+  np.pass=await hashPin(id, p1);
+  ROOT.profiles.push(np);
+  ROOT.active=ROOT.profiles.length-1;
+  S=ROOT.profiles[ROOT.active];
+  ROOT.session=id; save();
+  sfx.correct();
+  enterTitle();
+}
+document.getElementById('loginBtn').onclick=doLogin;
+document.getElementById('loginPw').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('regBtn').onclick=doRegister;
+document.getElementById('regToggle').onclick=()=>{
+  const b=document.getElementById('regBox');
+  const show=b.style.display==='none';
+  b.style.display=show?'flex':'none';
+  document.getElementById('regToggle').innerText=show?'로그인으로 돌아가기':'새 계정 만들기';
+};
+document.getElementById('verTag2').onclick=admTapCount;
+/* 시작: 인증 이관 후 세션 유지 시 자동 로그인 */
+(async function initAuth(){
+  await ensureAuth();
+  const idx=ROOT.session ? ROOT.profiles.findIndex(p=>p.loginId===ROOT.session) : -1;
+  if(idx>=0){
+    ROOT.active=idx; S=normalizeProfile(ROOT.profiles[idx]); save();
+    enterTitle();
+  } else {
+    showLogin();
+  }
+})();
 
 function backToTitle(){
   closeSettings();
@@ -2115,7 +2212,7 @@ function backToTitle(){
   talkBtn.style.display='none';
   joyBase.style.display='none'; joyKnob.style.display='none';
   save();
-  syncTitleInputs(); renderProfiles();
+  syncTitleInputs();
   document.getElementById('startScreen').style.display='flex';
 }
 document.getElementById('setClose').onclick=()=>{ sfx.click(); closeSettings(); };
@@ -2355,12 +2452,15 @@ function renderShop(){
    시작 (이름 + 캐릭터 선택)
 ============================================================ */
 (function(){
-  const bg=document.getElementById('starsBg');
-  for(let i=0;i<60;i++){
-    const s=document.createElement('i');
-    s.style.left=Math.random()*100+'%'; s.style.top=Math.random()*100+'%';
-    s.style.animationDelay=(Math.random()*2.4)+'s';
-    bg.appendChild(s);
+  for(const id of ['starsBg','starsBg2']){
+    const bg=document.getElementById(id);
+    if(!bg) continue;
+    for(let i=0;i<60;i++){
+      const s=document.createElement('i');
+      s.style.left=Math.random()*100+'%'; s.style.top=Math.random()*100+'%';
+      s.style.animationDelay=(Math.random()*2.4)+'s';
+      bg.appendChild(s);
+    }
   }
 })();
 let selChar = S.charIdx||0;
@@ -2394,60 +2494,12 @@ const PREVIEWS=[];
   });
   pr.dispose();
   syncTitleInputs();
-  renderProfiles();
 })();
 function syncTitleInputs(){
   document.getElementById('nameInput').value=S.name||'';
   selChar=S.charIdx||0;
   document.querySelectorAll('.charCard').forEach((el,i)=>el.classList.toggle('sel', i===selChar));
-  document.getElementById('verTag').innerText='v'+VERSION+' · 세이브 v'+ROOT.ver+' · 프로필 '+ROOT.profiles.length+'개';
-}
-function renderProfiles(){
-  const row=document.getElementById('profRow');
-  row.innerHTML='';
-  ROOT.profiles.forEach((p,i)=>{
-    const card=document.createElement('div');
-    card.className='profCard'+(i===ROOT.active?' sel':'');
-    const img=document.createElement('img'); img.src=PREVIEWS[p.charIdx||0]||'';
-    const pn=document.createElement('div'); pn.className='pn'; pn.innerText=p.name||('프로필 '+(i+1));
-    const pi=document.createElement('div'); pi.className='pi';
-    const st=Object.values(p.stars||{}).reduce((a,b)=>a+b,0);
-    pi.innerHTML='Lv.'+(p.level||1)+' &#183; &#11088;'+st;
-    card.appendChild(img); card.appendChild(pn); card.appendChild(pi);
-    if(ROOT.profiles.length>1){
-      const px=document.createElement('button'); px.className='px'; px.innerHTML='&#10005;';
-      px.onclick=(e)=>{
-        e.stopPropagation();
-        askConfirm('"'+(p.name||'프로필 '+(i+1))+'" 프로필을 삭제할까요?<br><span style="font-size:14px;color:#a83030;">모든 진행이 사라지고 되돌릴 수 없어요.</span>', ()=>{
-          ROOT.profiles.splice(i,1);
-          if(ROOT.active>=ROOT.profiles.length) ROOT.active=0;
-          S=ROOT.profiles[ROOT.active]; save();
-          syncTitleInputs(); renderProfiles();
-        });
-      };
-      card.appendChild(px);
-    }
-    card.onclick=()=>{ initAudio(); sfx.click(); switchProfile(i); };
-    row.appendChild(card);
-  });
-  if(ROOT.profiles.length<MAX_PROFILES){
-    const add=document.createElement('div');
-    add.className='profCard new'; add.innerHTML='+';
-    add.onclick=()=>{
-      initAudio(); sfx.click();
-      ROOT.profiles.push(defaultProfile());
-      switchProfile(ROOT.profiles.length-1);
-      document.getElementById('nameInput').focus();
-    };
-    row.appendChild(add);
-  }
-}
-function switchProfile(i){
-  ROOT.profiles[ROOT.active]=S;
-  ROOT.active=i;
-  S=normalizeProfile(ROOT.profiles[i]);
-  save();
-  syncTitleInputs(); renderProfiles();
+  document.getElementById('verTag').innerText='v'+VERSION+' · '+(S.loginId||'게스트')+' 계정';
 }
 document.getElementById('startBtn').onclick=()=>{
   initAudio(); sfx.click();
