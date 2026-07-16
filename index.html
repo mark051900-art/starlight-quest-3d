@@ -394,7 +394,7 @@ const WORLDS=[
 /* ============================================================
    버전 / 저장 / 상태
 ============================================================ */
-const VERSION='2.0.0';
+const VERSION='2.1.0';
 const SAVE_VER=2;
 let S = { ver:SAVE_VER, diamonds:0, xp:0, level:1, stars:{}, pets:[], cosmetics:[],
           equipped:{}, lastLevel:{}, stats:{}, wrongs:[] };
@@ -1796,6 +1796,20 @@ function openSettings(){
   setOverlayEl.style.display='flex';
 }
 function closeSettings(){ setOverlayEl.style.display='none'; setOpen=false; }
+function backToTitle(){
+  closeSettings();
+  started=false;
+  document.getElementById('hudTop').style.display='none';
+  talkBtn.style.display='none';
+  joyBase.style.display='none'; joyKnob.style.display='none';
+  /* 현재 이름/캐릭터를 선택 화면에 반영 */
+  document.getElementById('nameInput').value=S.name||'';
+  selChar=S.charIdx||0;
+  document.querySelectorAll('.charCard').forEach((el,i)=>el.classList.toggle('sel', i===selChar));
+  document.getElementById('verTag').innerText='v'+VERSION+' · 세이브 v'+S.ver;
+  document.getElementById('startScreen').style.display='flex';
+  toast('진행 데이터는 그대로 유지돼요');
+}
 document.getElementById('setClose').onclick=()=>{ sfx.click(); closeSettings(); };
 document.getElementById('setChip').onclick=()=>{ if(started) openSettings(); };
 function renderSettings(){
@@ -1825,6 +1839,7 @@ function renderSettings(){
     ${rows}
     <div style="display:flex;gap:8px;margin:14px 0 6px;">
       <button class="sBtn" id="btnReview" style="flex:1;">&#128218; 오답 복습 (${S.wrongs.length})</button>
+      <button class="sBtn" id="btnTitle" style="flex:1;">&#128100; 이름 &#183; 캐릭터 변경</button>
     </div>
     <div style="font-size:17px;margin:16px 0 8px;">세이브 관리</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1835,6 +1850,7 @@ function renderSettings(){
     <div style="text-align:center;color:var(--sub);font-size:13px;font-weight:normal;margin-top:16px;">
       별빛 학습 퀘스트 3D v${VERSION} &#183; 세이브 v${S.ver}</div>`;
   document.getElementById('btnReview').onclick=()=>{ sfx.click(); startReview(); };
+  document.getElementById('btnTitle').onclick=()=>{ sfx.click(); backToTitle(); };
   document.getElementById('btnExport').onclick=exportSave;
   document.getElementById('btnImport').onclick=()=>{ sfx.click(); document.getElementById('importFile').click(); };
   document.getElementById('btnReset').onclick=()=>{
