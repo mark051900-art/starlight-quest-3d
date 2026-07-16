@@ -473,7 +473,7 @@ const WORLDS=[
 /* ============================================================
    버전 / 멀티 프로필 저장
 ============================================================ */
-const VERSION='3.0.0';
+const VERSION='3.0.1';
 const SAVE_VER=3;
 const SAVE_KEY='starlight3d_mp';
 const MAX_PROFILES=4;
@@ -2106,6 +2106,14 @@ async function hashPin(id, pin){
 }
 /* 최초 1회: 지정 계정(서호/seahorse, 서아/seoa)으로 재편, 그 외 프로필 제거 */
 async function ensureAuth(){
+  /* 아이디 정정: seahorse -> seoho (진행 유지, 비번 0000 재설정) */
+  const legacy=ROOT.profiles.find(p=>p.loginId==='seahorse');
+  if(legacy){
+    legacy.loginId='seoho';
+    legacy.pass=await hashPin('seoho','0000');
+    if(ROOT.session==='seahorse') ROOT.session='seoho';
+    save();
+  }
   if(ROOT.profiles.length && ROOT.profiles.every(p=>p.loginId)) return;
   const sh=ROOT.profiles.find(p=>p.name==='서호' && !p.loginId);
   const sa=ROOT.profiles.find(p=>p.name==='서아' && !p.loginId);
@@ -2118,7 +2126,7 @@ async function ensureAuth(){
     return normalizeProfile(p);
   }
   const list=[...withLogin];
-  if(!list.some(p=>p.loginId==='seahorse')) list.push(await mk(sh,'seahorse','서호'));
+  if(!list.some(p=>p.loginId==='seoho')) list.push(await mk(sh,'seoho','서호'));
   if(!list.some(p=>p.loginId==='seoa')) list.push(await mk(sa,'seoa','서아'));
   ROOT.profiles=list;
   ROOT.active=0; S=ROOT.profiles[0];
