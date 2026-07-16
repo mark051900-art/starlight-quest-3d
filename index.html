@@ -75,6 +75,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d1630;
 .charCard .cn{font-size:13px;color:#cfe0ff;margin-top:2px;font-weight:normal;}
 .charCard.sel{border-color:var(--gold);background:rgba(255,211,92,.16);}
 .charCard.sel .cn{color:var(--gold);}
+#profRow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0 6px;max-width:600px;}
+.profCard{position:relative;background:rgba(255,255,255,.08);border:3px solid rgba(255,255,255,.18);border-radius:16px;
+  padding:8px 10px;min-width:92px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.profCard img{width:44px;height:52px;}
+.profCard .pn{font-size:14px;color:#fff;max-width:86px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.profCard .pi{font-size:11px;color:#8fa3cf;font-weight:normal;}
+.profCard.sel{border-color:var(--gold);background:rgba(255,211,92,.16);}
+.profCard .px{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;
+  background:#E25555;color:#fff;border:none;font-size:12px;font-family:inherit;line-height:1;}
+.profCard.new{justify-content:center;color:#8fa3cf;font-size:26px;min-height:96px;}
 .starsBg{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
 .starsBg i{position:absolute;width:3px;height:3px;background:#fff;border-radius:50%;opacity:.7;animation:tw 2.4s infinite;}
 @keyframes tw{50%{opacity:.15;}}
@@ -190,7 +200,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d1630;
   <button id="fsStartBtn">&#x26F6;</button>
   <div class="starsBg" id="starsBg"></div>
   <h1 style="font-size:min(8vw,42px);">별빛 학습 퀘스트 <b>3D</b></h1>
-  <p style="margin:10px 0 6px;">이름을 정하고 캐릭터를 골라 주세요</p>
+  <p style="margin:10px 0 4px;">프로필을 고르세요</p>
+  <div id="profRow"></div>
+  <p style="margin:8px 0 6px;">이름을 정하고 캐릭터를 골라 주세요</p>
   <input id="nameInput" maxlength="8" placeholder="이름 (최대 8글자)">
   <div id="charRow"></div>
   <button id="startBtn">모험 시작</button>
@@ -392,23 +404,42 @@ const WORLDS=[
 </script>
 <script>
 /* ============================================================
-   버전 / 저장 / 상태
+   버전 / 멀티 프로필 저장
 ============================================================ */
-const VERSION='2.1.0';
-const SAVE_VER=2;
-let S = { ver:SAVE_VER, diamonds:0, xp:0, level:1, stars:{}, pets:[], cosmetics:[],
-          equipped:{}, lastLevel:{}, stats:{}, wrongs:[] };
-try{ const raw=localStorage.getItem('starlight3d'); if(raw) S=Object.assign(S,JSON.parse(raw)); }catch(e){}
-/* 세이브 마이그레이션: 구버전 세이브를 현재 스키마로 보정 */
-(function migrate(){
-  if(!Array.isArray(S.pets)) S.pets=[];
-  if(!Array.isArray(S.cosmetics)) S.cosmetics=[];
-  if(!Array.isArray(S.wrongs)) S.wrongs=[];
+const VERSION='2.2.0';
+const SAVE_VER=3;
+const SAVE_KEY='starlight3d_mp';
+const MAX_PROFILES=4;
+function defaultProfile(){
+  return { ver:SAVE_VER, diamonds:0, xp:0, level:1, stars:{}, pets:[], cosmetics:[],
+           equipped:{}, lastLevel:{}, stats:{}, wrongs:[], name:'', charIdx:0 };
+}
+function normalizeProfile(p){
+  const d=defaultProfile();
+  for(const k in d) if(p[k]===undefined) p[k]=d[k];
+  if(!Array.isArray(p.pets)) p.pets=[];
+  if(!Array.isArray(p.cosmetics)) p.cosmetics=[];
+  if(!Array.isArray(p.wrongs)) p.wrongs=[];
   for(const k of ['stars','equipped','lastLevel','stats'])
-    if(typeof S[k]!=='object'||S[k]===null||Array.isArray(S[k])) S[k]={};
-  if(!S.ver || S.ver<SAVE_VER){ S.ver=SAVE_VER; }
-})();
-function save(){ try{ localStorage.setItem('starlight3d', JSON.stringify(S)); }catch(e){} }
+    if(typeof p[k]!=='object'||p[k]===null||Array.isArray(p[k])) p[k]={};
+  p.ver=SAVE_VER;
+  return p;
+}
+let ROOT={ ver:SAVE_VER, active:0, profiles:[] };
+try{ const raw=localStorage.getItem(SAVE_KEY); if(raw) ROOT=Object.assign(ROOT,JSON.parse(raw)); }catch(e){}
+if(!Array.isArray(ROOT.profiles)) ROOT.profiles=[];
+/* 구버전 단일 세이브 -> 프로필 1로 이관 (원본은 백업으로 유지) */
+if(ROOT.profiles.length===0){
+  try{ const old=localStorage.getItem('starlight3d'); if(old) ROOT.profiles.push(JSON.parse(old)); }catch(e){}
+}
+if(ROOT.profiles.length===0) ROOT.profiles.push(defaultProfile());
+ROOT.profiles.forEach(normalizeProfile);
+ROOT.active=Math.min(ROOT.active||0, ROOT.profiles.length-1);
+let S=ROOT.profiles[ROOT.active];
+function save(){
+  ROOT.profiles[ROOT.active]=S;
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(ROOT)); }catch(e){}
+}
 function xpNeed(lv){ return Math.floor(8 + Math.pow(lv,1.5)*2.5); }
 function addXp(n){
   S.xp+=n;
@@ -1802,13 +1833,9 @@ function backToTitle(){
   document.getElementById('hudTop').style.display='none';
   talkBtn.style.display='none';
   joyBase.style.display='none'; joyKnob.style.display='none';
-  /* 현재 이름/캐릭터를 선택 화면에 반영 */
-  document.getElementById('nameInput').value=S.name||'';
-  selChar=S.charIdx||0;
-  document.querySelectorAll('.charCard').forEach((el,i)=>el.classList.toggle('sel', i===selChar));
-  document.getElementById('verTag').innerText='v'+VERSION+' · 세이브 v'+S.ver;
+  save();
+  syncTitleInputs(); renderProfiles();
   document.getElementById('startScreen').style.display='flex';
-  toast('진행 데이터는 그대로 유지돼요');
 }
 document.getElementById('setClose').onclick=()=>{ sfx.click(); closeSettings(); };
 document.getElementById('setChip').onclick=()=>{ if(started) openSettings(); };
@@ -1839,37 +1866,39 @@ function renderSettings(){
     ${rows}
     <div style="display:flex;gap:8px;margin:14px 0 6px;">
       <button class="sBtn" id="btnReview" style="flex:1;">&#128218; 오답 복습 (${S.wrongs.length})</button>
-      <button class="sBtn" id="btnTitle" style="flex:1;">&#128100; 이름 &#183; 캐릭터 변경</button>
+      <button class="sBtn" id="btnTitle" style="flex:1;">&#128100; 프로필 &#183; 캐릭터 변경</button>
     </div>
     <div style="font-size:17px;margin:16px 0 8px;">세이브 관리</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="sBtn" id="btnExport" style="flex:1;">내보내기</button>
       <button class="sBtn" id="btnImport" style="flex:1;">가져오기</button>
-      <button class="sBtn" id="btnReset" style="flex:1;background:#FDECEC;color:#a83030;box-shadow:0 3px 0 #e8c8c8;">초기화</button>
+      <button class="sBtn" id="btnReset" style="flex:1;background:#FDECEC;color:#a83030;box-shadow:0 3px 0 #e8c8c8;">이 프로필 초기화</button>
     </div>
     <div style="text-align:center;color:var(--sub);font-size:13px;font-weight:normal;margin-top:16px;">
-      별빛 학습 퀘스트 3D v${VERSION} &#183; 세이브 v${S.ver}</div>`;
+      ${S.name||'프로필'} &#183; 별빛 학습 퀘스트 3D v${VERSION} &#183; 세이브 v${ROOT.ver} &#183; 프로필 ${ROOT.active+1}/${ROOT.profiles.length}</div>`;
   document.getElementById('btnReview').onclick=()=>{ sfx.click(); startReview(); };
   document.getElementById('btnTitle').onclick=()=>{ sfx.click(); backToTitle(); };
   document.getElementById('btnExport').onclick=exportSave;
   document.getElementById('btnImport').onclick=()=>{ sfx.click(); document.getElementById('importFile').click(); };
   document.getElementById('btnReset').onclick=()=>{
-    if(confirm('정말 모든 진행 데이터를 지울까요?') && confirm('되돌릴 수 없어요. 초기화하기 전에 내보내기를 해 두는 것을 추천해요. 계속할까요?')){
-      localStorage.removeItem('starlight3d'); location.reload();
+    if(confirm('"'+(S.name||'현재 프로필')+'"의 진행 데이터를 지울까요? (다른 프로필은 유지돼요)') && confirm('되돌릴 수 없어요. 계속할까요?')){
+      ROOT.profiles[ROOT.active]=defaultProfile();
+      save(); location.reload();
     }
   };
 }
 function exportSave(){
   sfx.click();
   try{
-    const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
+    ROOT.profiles[ROOT.active]=S;
+    const blob=new Blob([JSON.stringify(ROOT,null,1)],{type:'application/json'});
     const a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
     const d=new Date();
     a.download=`별빛퀘스트_세이브_v${VERSION}_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.json`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),3000);
-    toast('세이브 파일을 내려받았어요');
+    toast('전체 프로필 세이브를 내려받았어요');
   }catch(e){ toast('내보내기에 실패했어요'); }
 }
 document.getElementById('importFile').addEventListener('change',function(){
@@ -1879,11 +1908,21 @@ document.getElementById('importFile').addEventListener('change',function(){
   rd.onload=()=>{
     try{
       const data=JSON.parse(rd.result);
-      if(typeof data.diamonds!=='number' || typeof data.stars!=='object') throw new Error('bad');
-      if(confirm('현재 진행을 이 세이브 파일로 덮어쓸까요?')){
-        localStorage.setItem('starlight3d', JSON.stringify(data));
-        location.reload();
-      }
+      if(Array.isArray(data.profiles)){
+        /* 전체 세이브 파일 */
+        if(confirm('모든 프로필('+data.profiles.length+'개)을 이 세이브 파일로 덮어쓸까요?')){
+          localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+          location.reload();
+        }
+      } else if(typeof data.diamonds==='number' && typeof data.stars==='object'){
+        /* 구버전 단일 프로필 파일 -> 새 프로필로 추가 */
+        if(ROOT.profiles.length>=MAX_PROFILES){ toast('프로필이 가득 찼어요 (최대 '+MAX_PROFILES+'개)'); return; }
+        if(confirm('이 세이브를 새 프로필로 추가할까요?')){
+          ROOT.profiles.push(normalizeProfile(data));
+          ROOT.active=ROOT.profiles.length-1;
+          save(); location.reload();
+        }
+      } else throw new Error('bad');
     }catch(e){ toast('세이브 파일이 아니에요'); }
   };
   rd.readAsText(f);
@@ -2043,6 +2082,7 @@ function renderShop(){
   }
 })();
 let selChar = S.charIdx||0;
+const PREVIEWS=[];
 (function buildCharSelect(){
   const row=document.getElementById('charRow');
   /* 3D 미리보기 렌더러 */
@@ -2056,9 +2096,10 @@ let selChar = S.charIdx||0;
   CHARS.forEach((c,i)=>{
     const ch=buildCharacter(c); ch.g.rotation.y=0.45; sc.add(ch.g);
     pr.render(sc,cam);
+    PREVIEWS[i]=pr.domElement.toDataURL();
     const card=document.createElement('div');
     card.className='charCard'+(i===selChar?' sel':'');
-    const img=document.createElement('img'); img.src=pr.domElement.toDataURL(); img.alt=c.label;
+    const img=document.createElement('img'); img.src=PREVIEWS[i]; img.alt=c.label;
     const cn=document.createElement('div'); cn.className='cn'; cn.innerText=c.label;
     card.appendChild(img); card.appendChild(cn);
     card.onclick=()=>{
@@ -2070,15 +2111,69 @@ let selChar = S.charIdx||0;
     sc.remove(ch.g);
   });
   pr.dispose();
-  if(S.name) document.getElementById('nameInput').value=S.name;
-  document.getElementById('verTag').innerText='v'+VERSION+' · 세이브 v'+S.ver;
+  syncTitleInputs();
+  renderProfiles();
 })();
+function syncTitleInputs(){
+  document.getElementById('nameInput').value=S.name||'';
+  selChar=S.charIdx||0;
+  document.querySelectorAll('.charCard').forEach((el,i)=>el.classList.toggle('sel', i===selChar));
+  document.getElementById('verTag').innerText='v'+VERSION+' · 세이브 v'+ROOT.ver+' · 프로필 '+ROOT.profiles.length+'개';
+}
+function renderProfiles(){
+  const row=document.getElementById('profRow');
+  row.innerHTML='';
+  ROOT.profiles.forEach((p,i)=>{
+    const card=document.createElement('div');
+    card.className='profCard'+(i===ROOT.active?' sel':'');
+    const img=document.createElement('img'); img.src=PREVIEWS[p.charIdx||0]||'';
+    const pn=document.createElement('div'); pn.className='pn'; pn.innerText=p.name||('프로필 '+(i+1));
+    const pi=document.createElement('div'); pi.className='pi';
+    const st=Object.values(p.stars||{}).reduce((a,b)=>a+b,0);
+    pi.innerHTML='Lv.'+(p.level||1)+' &#183; &#11088;'+st;
+    card.appendChild(img); card.appendChild(pn); card.appendChild(pi);
+    if(ROOT.profiles.length>1){
+      const px=document.createElement('button'); px.className='px'; px.innerHTML='&#10005;';
+      px.onclick=(e)=>{
+        e.stopPropagation();
+        if(confirm('"'+(p.name||'프로필 '+(i+1))+'" 프로필을 삭제할까요?') && confirm('이 프로필의 모든 진행이 사라져요. 정말 삭제할까요?')){
+          ROOT.profiles.splice(i,1);
+          if(ROOT.active>=ROOT.profiles.length) ROOT.active=0;
+          S=ROOT.profiles[ROOT.active]; save();
+          syncTitleInputs(); renderProfiles();
+        }
+      };
+      card.appendChild(px);
+    }
+    card.onclick=()=>{ initAudio(); sfx.click(); switchProfile(i); };
+    row.appendChild(card);
+  });
+  if(ROOT.profiles.length<MAX_PROFILES){
+    const add=document.createElement('div');
+    add.className='profCard new'; add.innerHTML='+';
+    add.onclick=()=>{
+      initAudio(); sfx.click();
+      ROOT.profiles.push(defaultProfile());
+      switchProfile(ROOT.profiles.length-1);
+      document.getElementById('nameInput').focus();
+    };
+    row.appendChild(add);
+  }
+}
+function switchProfile(i){
+  ROOT.profiles[ROOT.active]=S;
+  ROOT.active=i;
+  S=normalizeProfile(ROOT.profiles[i]);
+  save();
+  syncTitleInputs(); renderProfiles();
+}
 document.getElementById('startBtn').onclick=()=>{
   initAudio(); sfx.click();
   const name=(document.getElementById('nameInput').value||'').trim()||'모험가';
   S.name=name; S.charIdx=selChar; save();
   setPlayerChar(selChar, name);
   setCompanion();
+  WORLDS.forEach((w,i)=>refreshBeacon(i)); /* 프로필별 별 반영 */
   document.getElementById('hName').innerText=name;
   document.getElementById('startScreen').style.display='none';
   document.getElementById('hudTop').style.display='flex';
