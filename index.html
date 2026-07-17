@@ -30,18 +30,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d1630;
 .xpbar i{display:block;height:100%;background:linear-gradient(90deg,#9be15d,#00e3ae);border-radius:99px;width:0%;transition:width .4s;}
 .chip .num{font-size:16px;}
 #hudTopRight{display:flex;gap:8px;}
-/* 좁은 화면: 칩 축소 + 오른쪽 그룹 가로 스크롤 허용 (잘림 방지) */
+/* 좁은 화면: 칩 축소 + 넘치면 오른쪽 그룹이 둘째 줄로 줄바꿈 (겹침/잘림 방지) */
 @media (max-width:520px){
-  #hudTop{padding:8px 8px;padding-top:calc(8px + env(safe-area-inset-top));gap:6px;}
+  #hudTop{padding:8px 8px;padding-top:calc(8px + env(safe-area-inset-top));
+    flex-wrap:wrap;row-gap:6px;justify-content:flex-start;}
   .chip{padding:6px 9px;border-radius:13px;gap:5px;}
   .chip .num{font-size:14px;}
   .chip .lv{font-size:11px;padding:1px 6px;}
   .xpbar{width:52px;height:7px;}
   #hName{font-size:13px !important;}
-  #hudTopRight{gap:5px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
-    max-width:62vw;justify-content:flex-end;flex-wrap:nowrap;}
-  #hudTopRight::-webkit-scrollbar{display:none;}
-  #hudTopRight .chip{flex-shrink:0;}
+  #hudTopRight{margin-left:auto;gap:5px;row-gap:5px;flex-wrap:wrap;justify-content:flex-end;}
 }
 @media (max-width:380px){
   .xpbar{display:none;}
