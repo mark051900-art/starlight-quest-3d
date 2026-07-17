@@ -41,8 +41,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d1630;
   #hName{font-size:13px !important;}
   #hudTopRight{margin-left:auto;gap:5px;row-gap:5px;flex-wrap:wrap;justify-content:flex-end;}
 }
-@media (max-width:380px){
+/* 세로 모드: 레벨 게이지 숨겨 한 줄 유지 (가로 모드에선 표시) */
+@media (orientation:portrait) and (max-width:520px){
   .xpbar{display:none;}
+}
+@media (max-width:380px){
   .chip{padding:5px 8px;}
 }
 
