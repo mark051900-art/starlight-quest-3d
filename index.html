@@ -902,49 +902,55 @@ function buildEgg(color){
 function buildAnimal(id){
   const g=new THREE.Group(); const out={g};
   const eyeM=mat(0x243044);
-  function eyes(y,z,gap){ const e1=new THREE.Mesh(new THREE.BoxGeometry(.07,.09,.03),eyeM); e1.position.set(-gap,y,z); g.add(e1); const e2=e1.clone(); e2.position.x=gap; g.add(e2); }
+  const glM=new THREE.MeshBasicMaterial({color:0xffffff});
+  function eyes(y,z,gap){
+    const e1=new THREE.Mesh(new THREE.SphereGeometry(.055,10,8),eyeM); e1.position.set(-gap,y,z); e1.scale.z=.6; g.add(e1);
+    const e2=e1.clone(); e2.position.x=gap; g.add(e2);
+    const gl1=new THREE.Mesh(new THREE.SphereGeometry(.02,6,5),glM); gl1.position.set(-gap+.02,y+.03,z+.04); g.add(gl1);
+    const gl2=gl1.clone(); gl2.position.x=gap+.02; g.add(gl2);
+  }
   if(id==='chick'){
-    const body=new THREE.Mesh(new THREE.BoxGeometry(.52,.46,.52), mat(0xFFE066)); body.position.y=.42; g.add(body);
-    const head=new THREE.Mesh(new THREE.BoxGeometry(.4,.36,.4), mat(0xFFE988)); head.position.set(0,.78,.06); g.add(head);
-    const beak=new THREE.Mesh(new THREE.ConeGeometry(.07,.14,4), mat(0xF2A93B)); beak.rotation.x=Math.PI/2; beak.position.set(0,.76,.3); g.add(beak);
-    eyes(.82,.26,.11);
-    for(const sx of [-1,1]){ const wing=new THREE.Mesh(new THREE.BoxGeometry(.08,.24,.3), mat(0xF2CE4B)); wing.position.set(sx*.31,.42,0); g.add(wing); }
-    for(const sx of [-1,1]){ const foot=new THREE.Mesh(new THREE.BoxGeometry(.1,.08,.16), mat(0xF2A93B)); foot.position.set(sx*.13,.14,.03); g.add(foot); }
+    const body=new THREE.Mesh(new THREE.SphereGeometry(.32,14,12), mat(0xFFE066)); body.position.y=.42; body.scale.y=.9; g.add(body);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.24,14,12), mat(0xFFE988)); head.position.set(0,.8,.06); g.add(head);
+    const beak=new THREE.Mesh(new THREE.ConeGeometry(.07,.14,5), mat(0xF2A93B)); beak.rotation.x=Math.PI/2; beak.position.set(0,.76,.3); g.add(beak);
+    eyes(.84,.24,.1);
+    for(const sx of [-1,1]){ const wing=new THREE.Mesh(new THREE.SphereGeometry(.16,8,7), mat(0xF2CE4B)); wing.position.set(sx*.3,.42,0); wing.scale.set(.4,1,.7); g.add(wing); }
+    for(const sx of [-1,1]){ const foot=new THREE.Mesh(new THREE.BoxGeometry(.1,.08,.16), mat(0xF2A93B)); foot.position.set(sx*.13,.12,.03); g.add(foot); }
   } else if(id==='puppy'||id==='cat'){
     const c = id==='puppy'? 0xC9A075 : 0x9AA3B8;
-    const body=new THREE.Mesh(new THREE.BoxGeometry(.66,.4,.44), mat(c)); body.position.y=.42; g.add(body);
-    const head=new THREE.Mesh(new THREE.BoxGeometry(.44,.4,.4), mat(c)); head.position.set(0,.66,.4); g.add(head);
-    const snout=new THREE.Mesh(new THREE.BoxGeometry(.2,.14,.12), mat(0xE8D8C8)); snout.position.set(0,.58,.64); g.add(snout);
-    const nose=new THREE.Mesh(new THREE.BoxGeometry(.08,.06,.04), eyeM); nose.position.set(0,.62,.71); g.add(nose);
-    eyes(.72,.61,.12);
+    const body=new THREE.Mesh(new THREE.SphereGeometry(.32,14,12), mat(c)); body.position.y=.42; body.scale.set(1.05,.72,.78); g.add(body);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.26,14,12), mat(c)); head.position.set(0,.66,.42); head.scale.set(1,.94,.96); g.add(head);
+    const snout=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8), mat(0xE8D8C8)); snout.position.set(0,.58,.64); snout.scale.set(1,.75,.7); g.add(snout);
+    const nose=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6), eyeM); nose.position.set(0,.62,.73); g.add(nose);
+    eyes(.72,.63,.12);
     if(id==='puppy'){
-      for(const sx of [-1,1]){ const ear=new THREE.Mesh(new THREE.BoxGeometry(.1,.24,.14), mat(darken(c,.7))); ear.position.set(sx*.24,.82,.36); ear.rotation.z=sx*.4; g.add(ear); }
+      for(const sx of [-1,1]){ const ear=new THREE.Mesh(new THREE.SphereGeometry(.12,8,7), mat(darken(c,.7))); ear.position.set(sx*.26,.78,.36); ear.scale.set(.5,1,.4); ear.rotation.z=sx*.3; g.add(ear); }
     } else {
-      for(const sx of [-1,1]){ const ear=new THREE.Mesh(new THREE.ConeGeometry(.1,.22,4), mat(c)); ear.position.set(sx*.15,.92,.38); g.add(ear); }
+      for(const sx of [-1,1]){ const ear=new THREE.Mesh(new THREE.ConeGeometry(.1,.22,5), mat(c)); ear.position.set(sx*.15,.92,.38); g.add(ear); }
     }
-    const tail=new THREE.Mesh(new THREE.BoxGeometry(.1,.1,id==='cat'?.5:.34), mat(darken(c,.8)));
+    const tail=new THREE.Mesh(new THREE.CylinderGeometry(.05,.03,id==='cat'?.5:.34,6), mat(darken(c,.8)));
     tail.position.set(0,.56,-.42); tail.rotation.x=id==='cat'? -.7 : -.4; g.add(tail); out.tail=tail;
-    for(const [sx,sz] of [[-.22,.14],[.22,.14],[-.22,-.14],[.22,-.14]]){
-      const leg=new THREE.Mesh(new THREE.BoxGeometry(.13,.24,.13), mat(darken(c,.85))); leg.position.set(sx,.12,sz); g.add(leg);
+    for(const [sx,sz] of [[-.2,.14],[.2,.14],[-.2,-.14],[.2,-.14]]){
+      const leg=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.24,7), mat(darken(c,.85))); leg.position.set(sx,.12,sz); g.add(leg);
     }
   } else if(id==='rabbit'){
-    const body=new THREE.Mesh(new THREE.BoxGeometry(.5,.44,.52), mat(0xF5F0F2)); body.position.y=.4; g.add(body);
-    const head=new THREE.Mesh(new THREE.BoxGeometry(.4,.36,.36), mat(0xFAF6F8)); head.position.set(0,.72,.2); g.add(head);
-    eyes(.76,.39,.11);
-    const nose=new THREE.Mesh(new THREE.BoxGeometry(.06,.05,.03), mat(0xE8A0B0)); nose.position.set(0,.68,.39); g.add(nose);
+    const body=new THREE.Mesh(new THREE.SphereGeometry(.3,14,12), mat(0xF5F0F2)); body.position.y=.4; body.scale.set(.9,1,.95); g.add(body);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.24,14,12), mat(0xFAF6F8)); head.position.set(0,.74,.2); g.add(head);
+    eyes(.78,.4,.11);
+    const nose=new THREE.Mesh(new THREE.SphereGeometry(.035,8,6), mat(0xE8A0B0)); nose.position.set(0,.7,.42); g.add(nose);
     for(const sx of [-1,1]){
-      const ear=new THREE.Mesh(new THREE.BoxGeometry(.11,.46,.08), mat(0xF5F0F2)); ear.position.set(sx*.12,1.08,.14); ear.rotation.z=sx*.12; g.add(ear);
-      const inner=new THREE.Mesh(new THREE.BoxGeometry(.06,.34,.02), mat(0xF2C4D0)); inner.position.set(sx*.12,1.08,.19); inner.rotation.z=sx*.12; g.add(inner);
+      const ear=new THREE.Mesh(new THREE.CylinderGeometry(.055,.045,.46,8), mat(0xF5F0F2)); ear.position.set(sx*.12,1.12,.14); ear.rotation.z=sx*.12; g.add(ear);
+      const inner=new THREE.Mesh(new THREE.CylinderGeometry(.03,.025,.34,6), mat(0xF2C4D0)); inner.position.set(sx*.12,1.12,.19); inner.rotation.z=sx*.12; g.add(inner);
     }
-    const tail=new THREE.Mesh(new THREE.SphereGeometry(.12,6,5), mat(0xffffff)); tail.position.set(0,.42,-.3); g.add(tail);
+    const tail=new THREE.Mesh(new THREE.SphereGeometry(.12,8,7), mat(0xffffff)); tail.position.set(0,.42,-.3); g.add(tail);
   } else if(id==='dragon'){
     const c=0x57C87B;
-    const body=new THREE.Mesh(new THREE.BoxGeometry(.66,.48,.54), mat(c)); body.position.y=.5; g.add(body);
-    const belly=new THREE.Mesh(new THREE.BoxGeometry(.4,.36,.06), mat(0xC8E8A0)); belly.position.set(0,.46,.28); g.add(belly);
-    const head=new THREE.Mesh(new THREE.BoxGeometry(.48,.42,.42), mat(c)); head.position.set(0,.86,.4); g.add(head);
-    const snout=new THREE.Mesh(new THREE.BoxGeometry(.26,.16,.16), mat(darken(c,.9))); snout.position.set(0,.78,.66); g.add(snout);
-    eyes(.94,.62,.13);
-    for(const sx of [-1,1]){ const horn=new THREE.Mesh(new THREE.ConeGeometry(.07,.2,4), mat(0xF5F0E0)); horn.position.set(sx*.15,1.12,.32); horn.rotation.x=-.3; g.add(horn); }
+    const body=new THREE.Mesh(new THREE.SphereGeometry(.34,14,12), mat(c)); body.position.y=.5; body.scale.set(1,.92,.86); g.add(body);
+    const belly=new THREE.Mesh(new THREE.SphereGeometry(.22,10,8), mat(0xC8E8A0)); belly.position.set(0,.46,.22); belly.scale.set(.9,1,.35); g.add(belly);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.27,14,12), mat(c)); head.position.set(0,.88,.4); head.scale.set(1,.92,.95); g.add(head);
+    const snout=new THREE.Mesh(new THREE.SphereGeometry(.14,10,8), mat(darken(c,.9))); snout.position.set(0,.8,.64); snout.scale.set(1,.7,.8); g.add(snout);
+    eyes(.96,.62,.13);
+    for(const sx of [-1,1]){ const horn=new THREE.Mesh(new THREE.ConeGeometry(.07,.2,5), mat(0xF5F0E0)); horn.position.set(sx*.15,1.16,.32); horn.rotation.x=-.3; g.add(horn); }
     /* 날개 (피벗) */
     out.wings=[];
     for(const sx of [-1,1]){
@@ -1171,9 +1177,9 @@ function refreshBeacon(i){
 }
 WORLDS.forEach((w,i)=>refreshBeacon(i));
 
-/* 구름 */
+/* 구름 (높고 멀리 배치 - 플레이 시야를 가리지 않게) */
 const clouds=[];
-for(let i=0;i<14;i++){
+for(let i=0;i<10;i++){
   const g=new THREE.Group();
   const puffs=3+Math.floor(Math.random()*2);
   for(let k=0;k<puffs;k++){
@@ -1182,9 +1188,10 @@ for(let i=0;i<14;i++){
     p.position.set(k*1.9-(puffs-1)*0.95+Math.random()*.6, Math.random()*.5, Math.random()*1.2);
     p.scale.y=.72; g.add(p);
   }
-  const a=Math.random()*Math.PI*2, d=20+Math.random()*70;
-  g.position.set(Math.cos(a)*d, 6+Math.random()*14, Math.sin(a)*d);
+  const a=Math.random()*Math.PI*2, d=45+Math.random()*70;
+  g.position.set(Math.cos(a)*d, 24+Math.random()*16, Math.sin(a)*d);
   g.userData.speed=0.4+Math.random()*0.6;
+  g.userData.baseR=d;
   scene.add(g); clouds.push(g);
 }
 
@@ -1336,20 +1343,25 @@ function buildCharacter(cfg){
   function makeArm(x){
     const grp=new THREE.Group(); grp.position.set(x,1.44,0);
     const arm=new THREE.Mesh(new THREE.BoxGeometry(.2,.56,.2), shirtDark); arm.position.y=-.28; grp.add(arm);
-    const hand=new THREE.Mesh(new THREE.BoxGeometry(.18,.16,.18), skinM); hand.position.y=-.62; grp.add(hand);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(.11,10,8), skinM); hand.position.y=-.62; grp.add(hand);
     g.add(grp); return grp;
   }
   const armL=makeArm(-.54), armR=makeArm(.54);
 
-  /* 머리 + 얼굴 */
+  /* 머리 + 얼굴 (둥근 모서리 느낌: 박스 + 구 블렌드) */
   const head=new THREE.Mesh(new THREE.BoxGeometry(.68,.62,.6), skinM); head.position.y=1.9; g.add(head);
-  const eyeG=new THREE.BoxGeometry(.1,.13,.04), eyeM=mat(0x243044);
-  const eL=new THREE.Mesh(eyeG,eyeM); eL.position.set(-.15,1.93,.31); g.add(eL);
+  const headR=new THREE.Mesh(new THREE.SphereGeometry(.4,14,12), skinM); headR.position.y=1.94; headR.scale.set(.92,.86,.86); g.add(headR);
+  const eyeG=new THREE.SphereGeometry(.075,10,8), eyeM=mat(0x243044);
+  const eL=new THREE.Mesh(eyeG,eyeM); eL.position.set(-.15,1.93,.33); eL.scale.set(.8,1.3,.5); g.add(eL);
   const eR=eL.clone(); eR.position.x=.15; g.add(eR);
-  const mouth=new THREE.Mesh(new THREE.BoxGeometry(.16,.05,.03), mat(0xB35A4A)); mouth.position.set(0,1.75,.31); g.add(mouth);
+  /* 눈 하이라이트 (생기) */
+  const glG=new THREE.SphereGeometry(.028,6,5), glM=new THREE.MeshBasicMaterial({color:0xffffff});
+  const glL=new THREE.Mesh(glG,glM); glL.position.set(-.13,1.96,.36); g.add(glL);
+  const glR=glL.clone(); glR.position.x=.17; g.add(glR);
+  const mouth=new THREE.Mesh(new THREE.BoxGeometry(.16,.05,.03), mat(0xB35A4A)); mouth.position.set(0,1.75,.33); g.add(mouth);
   const cheekM=mat(0xF2A6A0);
-  const cL=new THREE.Mesh(new THREE.BoxGeometry(.1,.07,.02), cheekM); cL.position.set(-.25,1.82,.31); g.add(cL);
-  const cR=cL.clone(); cR.position.x=.25; g.add(cR);
+  const cL=new THREE.Mesh(new THREE.SphereGeometry(.06,8,6), cheekM); cL.position.set(-.26,1.82,.31); cL.scale.set(1,.7,.3); g.add(cL);
+  const cR=cL.clone(); cR.position.x=.26; g.add(cR);
 
   /* 헤어스타일 */
   const top=new THREE.Mesh(new THREE.BoxGeometry(.74,.22,.66), hairM); top.position.y=2.26; g.add(top);
