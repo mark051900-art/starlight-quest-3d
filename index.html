@@ -752,12 +752,6 @@ const HUB_R=15, ISL_R=8, ISL_DIST=36, WALK_Y=0;
 const canvas=document.getElementById('c3d');
 const renderer=new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.6));
-/* 부드러운 화면: 필름 톤매핑 + sRGB */
-try{
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure=1.12;
-  renderer.outputEncoding=THREE.sRGBEncoding;
-}catch(e){}
 const GFX_SOFT = !(ROOT.gfx && ROOT.gfx.soft===false); /* 기본 켬 */
 if(GFX_SOFT){
   try{
