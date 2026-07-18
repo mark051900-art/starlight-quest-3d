@@ -752,6 +752,19 @@ const HUB_R=15, ISL_R=8, ISL_DIST=36, WALK_Y=0;
 const canvas=document.getElementById('c3d');
 const renderer=new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.6));
+/* 부드러운 화면: 필름 톤매핑 + sRGB */
+try{
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.12;
+  renderer.outputEncoding=THREE.sRGBEncoding;
+}catch(e){}
+const GFX_SOFT = !(ROOT.gfx && ROOT.gfx.soft===false); /* 기본 켬 */
+if(GFX_SOFT){
+  try{
+    renderer.shadowMap.enabled=true;
+    renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  }catch(e){}
+}
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x8ED4F5);
 scene.fog=new THREE.Fog(0x8ED4F5, 55, 130);
@@ -759,33 +772,67 @@ const camera=new THREE.PerspectiveCamera(55, innerWidth/innerHeight, .1, 300);
 
 const hemi=new THREE.HemisphereLight(0xdff3fc, 0x6a8f56, 0.95); scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xfff3d6, 0.9); sun.position.set(30,50,20); scene.add(sun);
+if(GFX_SOFT){
+  try{
+    sun.castShadow=true;
+    sun.shadow.mapSize.width=1024; sun.shadow.mapSize.height=1024;
+    sun.shadow.camera.left=-22; sun.shadow.camera.right=22;
+    sun.shadow.camera.top=22; sun.shadow.camera.bottom=-22;
+    sun.shadow.camera.near=5; sun.shadow.camera.far=140;
+    sun.shadow.bias=-0.0006;
+    scene.add(sun.target);
+  }catch(e){}
+}
 
-function mat(c){ return new THREE.MeshLambertMaterial({color:c, flatShading:true}); }
+function mat(c){ return new THREE.MeshLambertMaterial({color:c}); }          /* 부드러운 음영 */
+function fmat(c){ return new THREE.MeshLambertMaterial({color:c, flatShading:true}); } /* 각진 음영(바위/보석) */
 
-/* --- 섬 --- */
+/* --- 섬: 완만한 곡면 지형 (걷는 면은 평평, 가장자리와 아래는 둥글게) --- */
 function makeIsland(radius, grassColor){
   const g=new THREE.Group();
-  const top=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius*0.94,1.6,9), mat(grassColor));
-  top.position.y=-0.8; g.add(top);
-  const dirt=new THREE.Mesh(new THREE.CylinderGeometry(radius*0.92,radius*0.28,radius*0.95,9), mat(0x8A6248));
-  dirt.position.y=-1.6-radius*0.47; g.add(dirt);
-  const tip=new THREE.Mesh(new THREE.ConeGeometry(radius*0.28,radius*0.5,9), mat(0x6E4C36));
-  tip.rotation.x=Math.PI; tip.position.y=-1.6-radius*0.95-radius*0.24; g.add(tip);
+  const V=(x,y)=>new THREE.Vector2(x,y);
+  /* 잔디: 평평한 상판 -> 둥근 가장자리 -> 스커트 */
+  const grassPts=[
+    V(0, 0.02), V(radius*0.55, 0.02), V(radius*0.85, -0.04),
+    V(radius*0.97, -0.22), V(radius, -0.62), V(radius*0.965, -1.25)
+  ];
+  const grass=new THREE.Mesh(new THREE.LatheGeometry(grassPts, 30), mat(grassColor));
+  g.add(grass);
+  /* 흙: 부드러운 곡선으로 뾰족한 바닥까지 */
+  const dirtPts=[
+    V(radius*0.965, -1.25), V(radius*0.8, -1.6-radius*0.28),
+    V(radius*0.52, -1.6-radius*0.62), V(radius*0.24, -1.6-radius*0.95),
+    V(radius*0.06, -1.6-radius*1.16), V(0, -1.6-radius*1.2)
+  ];
+  const dirt=new THREE.Mesh(new THREE.LatheGeometry(dirtPts, 30), mat(0x8A6248));
+  g.add(dirt);
   return g;
 }
 function makeTree(scale=1){
   const g=new THREE.Group();
-  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.22*scale,.3*scale,1.1*scale,6), mat(0x7a5236));
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.2*scale,.3*scale,1.15*scale,10), mat(0x7a5236));
   trunk.position.y=.55*scale; g.add(trunk);
-  const c=0x4E9B44;
-  for(let i=0;i<3;i++){
-    const cone=new THREE.Mesh(new THREE.ConeGeometry((1.5-i*0.38)*scale,1.2*scale,7), mat(c));
-    cone.position.y=(1.4+i*0.75)*scale; g.add(cone);
+  if(Math.random()<0.42){
+    /* 둥근 활엽수: 겹친 구 3개 */
+    const c=0x5FB552;
+    const s1=new THREE.Mesh(new THREE.SphereGeometry(1.15*scale,12,9), mat(c));
+    s1.position.y=2.0*scale; s1.scale.y=.92; g.add(s1);
+    const s2=new THREE.Mesh(new THREE.SphereGeometry(.8*scale,10,8), mat(0x6DC15E));
+    s2.position.set(.55*scale,2.55*scale,.2*scale); g.add(s2);
+    const s3=new THREE.Mesh(new THREE.SphereGeometry(.62*scale,10,8), mat(0x54A84B));
+    s3.position.set(-.5*scale,2.5*scale,-.25*scale); g.add(s3);
+  } else {
+    /* 부드러운 소나무: 매끈한 원뿔 3단 */
+    const c=0x4E9B44;
+    for(let i=0;i<3;i++){
+      const cone=new THREE.Mesh(new THREE.ConeGeometry((1.5-i*0.38)*scale,1.25*scale,12), mat(c));
+      cone.position.y=(1.4+i*0.72)*scale; g.add(cone);
+    }
   }
   return g;
 }
 function makeRock(scale=1){
-  const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.55*scale,0), mat(0x9aa3ad));
+  const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.55*scale,0), fmat(0x9aa3ad));
   r.position.y=.3*scale; r.rotation.set(Math.random(),Math.random(),0); return r;
 }
 function rndOnIsland(cx,cz,r){
@@ -926,6 +973,7 @@ function setCompanion(){
   const pet=S.pets[i], tp=petType(pet.type);
   const built = pet.hatched ? buildAnimal(pet.type) : buildEgg(tp.egg);
   companion=built.g; compParts=built;
+  applyShadow(companion);
   companion.position.set(player.position.x+1.6, 0, player.position.z+1.2);
   scene.add(companion);
   updatePetChip();
@@ -1130,15 +1178,27 @@ WORLDS.forEach((w,i)=>refreshBeacon(i));
 const clouds=[];
 for(let i=0;i<14;i++){
   const g=new THREE.Group();
-  for(let k=0;k<3;k++){
-    const p=new THREE.Mesh(new THREE.IcosahedronGeometry(1.6+Math.random()*1.4,0),
-      new THREE.MeshLambertMaterial({color:0xffffff, flatShading:true}));
-    p.position.set(k*2-2+Math.random(), Math.random()*.6, Math.random()*1.4); g.add(p);
+  const puffs=3+Math.floor(Math.random()*2);
+  for(let k=0;k<puffs;k++){
+    const p=new THREE.Mesh(new THREE.SphereGeometry(1.4+Math.random()*1.3, 12, 9),
+      new THREE.MeshLambertMaterial({color:0xffffff}));
+    p.position.set(k*1.9-(puffs-1)*0.95+Math.random()*.6, Math.random()*.5, Math.random()*1.2);
+    p.scale.y=.72; g.add(p);
   }
   const a=Math.random()*Math.PI*2, d=20+Math.random()*70;
   g.position.set(Math.cos(a)*d, 6+Math.random()*14, Math.sin(a)*d);
   g.userData.speed=0.4+Math.random()*0.6;
   scene.add(g); clouds.push(g);
+}
+
+/* 부드러운 그림자: 씬 전체 메시에 캐스트/리시브 지정 */
+if(GFX_SOFT){
+  try{
+    scene.traverse(o=>{
+      if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
+      if(o.isSprite || o.isPoints){ o.castShadow=false; }
+    });
+  }catch(e){}
 }
 
 /* ============================================================
@@ -1423,6 +1483,10 @@ function makeNameSprite(text){
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv), transparent:true}));
   sp.scale.set(3.4,1.02,1); return sp;
 }
+function applyShadow(obj){
+  if(!GFX_SOFT || !obj) return;
+  try{ obj.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=false; } }); }catch(e){}
+}
 function setPlayerChar(idx, name){
   while(player.children.length) player.remove(player.children[0]);
   const cfg=Object.assign({}, CHARS[idx]);
@@ -1431,6 +1495,7 @@ function setPlayerChar(idx, name){
   attachCosmetics(P.g);
   player.add(P.g);
   if(name){ playerName=makeNameSprite(name); playerName.position.y=3.05; player.add(playerName); }
+  applyShadow(player);
 }
 setPlayerChar(S.charIdx||0, null);
 
@@ -1681,6 +1746,11 @@ function animate(){
 
   /* 별 비콘 반짝 */
   beacons.forEach(b=>b.stars.forEach((s,k)=>{ s.rotation.y=t*2+k; s.position.x=Math.sin(t*1.4+k)*0.12; }));
+  /* 태양이 플레이어를 따라다녀 그림자가 항상 선명하게 */
+  if(GFX_SOFT && player){
+    sun.position.set(player.position.x+26, 44, player.position.z+16);
+    sun.target.position.copy(player.position);
+  }
   /* 구름 이동 */
   clouds.forEach(c=>{ c.position.x+=c.userData.speed*dt; if(c.position.x>110) c.position.x=-110; });
 
@@ -2621,6 +2691,8 @@ function renderSettings(){
       <button class="sBtn" id="btnReview" style="flex:1;">&#128218; 오답 복습 (${S.wrongs.length})</button>
       <button class="sBtn" id="btnTitle" style="flex:1;">&#128100; 프로필 &#183; 캐릭터 변경</button>
     </div>
+    <div style="font-size:17px;margin:16px 0 8px;">그래픽</div>
+    <button class="tog ${(!ROOT.gfx||ROOT.gfx.soft!==false)?'on':'off'}" id="togGfx" style="width:100%;">부드러운 그림자 ${(!ROOT.gfx||ROOT.gfx.soft!==false)?'켬':'끔'} <span style="font-size:12px;opacity:.7;">(끄면 더 빨라져요)</span></button>
     <div style="font-size:17px;margin:16px 0 8px;">사운드</div>
     <div style="display:flex;gap:8px;">
       <button class="tog ${(!ROOT.sound||ROOT.sound.bgm!==false)?'on':'off'}" id="togBgm" style="flex:1;">배경음악 ${(!ROOT.sound||ROOT.sound.bgm!==false)?'켬':'끔'}</button>
@@ -2635,6 +2707,12 @@ function renderSettings(){
     <div id="setFooter" style="text-align:center;color:var(--sub);font-size:13px;font-weight:normal;margin-top:16px;">
       ${S.name||'프로필'} &#183; 별빛 학습 퀘스트 3D v${VERSION} &#183; 세이브 v${ROOT.ver} &#183; 프로필 ${ROOT.active+1}/${ROOT.profiles.length}</div>`;
   document.getElementById('setFooter').onclick=admTapCount;
+  document.getElementById('togGfx').onclick=()=>{
+    if(!ROOT.gfx) ROOT.gfx={soft:true};
+    ROOT.gfx.soft=!(ROOT.gfx.soft!==false);
+    save(); sfx.click();
+    askConfirm('그래픽 설정 적용을 위해 새로고침할까요?', ()=>location.reload());
+  };
   document.getElementById('togBgm').onclick=()=>{
     if(!ROOT.sound) ROOT.sound={bgm:true,sfx:true};
     ROOT.sound.bgm=!(ROOT.sound.bgm!==false);
