@@ -618,7 +618,7 @@ const WORLDS=[
 /* ============================================================
    버전 / 멀티 프로필 저장
 ============================================================ */
-const VERSION='3.7.0';
+const VERSION='3.7.1';
 const SAVE_VER=3;
 const SAVE_KEY='starlight3d_mp';
 const MAX_PROFILES=4;
@@ -976,13 +976,23 @@ function buildAnimal(id){
     const tailTip=new THREE.Mesh(new THREE.ConeGeometry(.1,.2,4), mat(0xF5F0E0)); tailTip.position.set(0,.62,-.78); tailTip.rotation.x=-1.2; g.add(tailTip);
     out.tail=tail;
   } else if(id==='duck'){
-    const c=0xFFE9A0;
-    const body=new THREE.Mesh(new THREE.SphereGeometry(.32,14,12), mat(c)); body.position.y=.42; body.scale.set(1,.9,1.05); g.add(body);
-    const head=new THREE.Mesh(new THREE.SphereGeometry(.22,14,12), mat(c)); head.position.set(0,.82,.08); g.add(head);
-    const beak=new THREE.Mesh(new THREE.BoxGeometry(.16,.06,.16), mat(0xF2A93B)); beak.position.set(0,.78,.3); g.add(beak);
-    eyes(.86,.2,.09);
-    for(const sx of [-1,1]){ const wing=new THREE.Mesh(new THREE.SphereGeometry(.16,8,7), mat(darken(c,.9))); wing.position.set(sx*.3,.42,0); wing.scale.set(.35,1,.8); g.add(wing); }
-    for(const sx of [-1,1]){ const foot=new THREE.Mesh(new THREE.BoxGeometry(.12,.05,.16), mat(0xF2A93B)); foot.position.set(sx*.13,.1,.05); g.add(foot); }
+    const bodyC=0xF2F2F2, headC=0x2E9E5B;
+    const body=new THREE.Mesh(new THREE.SphereGeometry(.34,14,12), mat(bodyC)); body.position.y=.4; body.scale.set(1,.85,1.15); g.add(body);
+    // 세운 목
+    const neck=new THREE.Mesh(new THREE.CylinderGeometry(.11,.14,.28,10), mat(headC)); neck.position.set(0,.72,.16); neck.rotation.x=.35; g.add(neck);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.2,14,12), mat(headC)); head.position.set(0,.92,.26); g.add(head);
+    // 넓적한 주황 부리
+    const beak=new THREE.Mesh(new THREE.BoxGeometry(.2,.07,.22), mat(0xF2A93B)); beak.position.set(0,.88,.46); g.add(beak);
+    const beakTip=new THREE.Mesh(new THREE.BoxGeometry(.18,.05,.08), mat(0xE0912A)); beakTip.position.set(0,.87,.56); g.add(beakTip);
+    eyes(.98,.4,.1);
+    // 목 흰 링
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.13,.03,8,16), mat(0xF2F2F2)); ring.position.set(0,.78,.18); ring.rotation.x=1.2; g.add(ring);
+    // 접힌 날개
+    for(const sx of [-1,1]){ const wing=new THREE.Mesh(new THREE.SphereGeometry(.18,10,8), mat(0xDCDCDC)); wing.position.set(sx*.28,.42,-.05); wing.scale.set(.35,.8,1.1); g.add(wing); }
+    // 꼬리 살짝 위로
+    const tail=new THREE.Mesh(new THREE.ConeGeometry(.1,.2,6), mat(0xDCDCDC)); tail.position.set(0,.5,-.44); tail.rotation.x=-1.9; g.add(tail);
+    // 물갈퀴 발
+    for(const sx of [-1,1]){ const foot=new THREE.Mesh(new THREE.BoxGeometry(.14,.04,.2), mat(0xF2A93B)); foot.position.set(sx*.14,.06,.08); g.add(foot); }
   } else if(id==='panda'){
     const body=new THREE.Mesh(new THREE.SphereGeometry(.34,14,12), mat(0xF2F2F2)); body.position.y=.44; body.scale.set(1,.95,.85); g.add(body);
     const head=new THREE.Mesh(new THREE.SphereGeometry(.28,14,12), mat(0xF2F2F2)); head.position.set(0,.82,.34); g.add(head);
